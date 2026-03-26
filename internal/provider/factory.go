@@ -44,5 +44,9 @@ func ProtoV5ProviderServerFactory(ctx context.Context) (func() tfprotov5.Provide
 		return nil, nil, err
 	}
 
-	return muxServer.ProviderServer, primary, nil
+	// Wrap the mux server to add MoveResourceState support for cross-type
+	// migrations that terraform-plugin-sdk/v2 does not support natively.
+	wrapped := &moveResourceStateServer{ProviderServer: muxServer.ProviderServer()}
+
+	return func() tfprotov5.ProviderServer { return wrapped }, primary, nil
 }
